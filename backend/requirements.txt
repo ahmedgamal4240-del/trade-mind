@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+yfinance
+google-generativeai
+python-dotenv
+newsapi-python
+pandas
+matplotlib
+requests
+supabase
+scikit-learn
+ta
+

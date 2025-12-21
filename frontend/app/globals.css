@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@theme {
+  /* Custom Neon Color Palette */
+  --color-neon-cyan: #00f3ff;
+  --color-neon-purple: #9d00ff;
+  --color-neon-pink: #ec4899;
+  --color-neon-green: #00ff9d;
+  --color-dark-bg: #030308;
+  --color-card-bg: rgba(255, 255, 255, 0.03);
+  --color-glass-border: rgba(255, 255, 255, 0.1);
+  --color-glass-highlight: rgba(255, 255, 255, 0.05);
+  
+  /* Animations */
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+:root {
+  --background: #030308;
+  --foreground: #ffffff;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(157, 0, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 0% 50%, rgba(0, 243, 255, 0.05) 0%, transparent 50%);
+  min-height: 100vh;
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: var(--color-card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-glass-border);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.glass-panel-hover:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
+}
+
+/* Neon Text Utilities */
+.text-glow-cyan {
+  text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+}
+
+.text-glow-purple {
+  text-shadow: 0 0 10px rgba(157, 0, 255, 0.5);
+}
+
+.text-glow-green {
+  text-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Input/Form resets for glass look */
+input, textarea, select {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--color-glass-border);
+  color: white;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--color-neon-cyan);
+  box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+}
