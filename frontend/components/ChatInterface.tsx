@@ -100,22 +100,39 @@ export default function ChatInterface({ ticker = "General" }: ChatProps) {
         setInput('');
 
         try {
-            // Simulate AI delay for demo
-            await new Promise(r => setTimeout(r, 1500));
+            // Real API Call
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: input,
+                    image_url: previewUrl, // Note: In a real app we'd upload this file first and send the URL. For now we assume previewUrl is local or we need to handle file upload logic differently if it's a blob.
+                    ticker: ticker
+                }),
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch response');
+
+            const data = await response.json();
 
             const aiMsg: Message = {
                 id: uuidv4(),
                 role: 'ai',
-                content: `I've analyzed your request about "${input}". This is a simulated response for the demo. In a real scenario, I would process the ${selectedImage ? 'image and ' : ''} text.`
+                content: data.response
             };
             setMessages(prev => [...prev, aiMsg]);
         } catch (error) {
             console.error(error);
+            const errorMsg: Message = {
+                id: uuidv4(),
+                role: 'assistant', // System message
+                content: "I'm having trouble reaching the server. Please check your connection."
+            };
+            setMessages(prev => [...prev, errorMsg]);
         } finally {
             setLoading(false);
-            // Clear image after send if needed, or keep for context
-            // setSelectedImage(null); 
-            // setPreviewUrl(null);
         }
     };
 

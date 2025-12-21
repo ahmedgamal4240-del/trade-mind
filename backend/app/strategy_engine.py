@@ -102,3 +102,43 @@ def analyze_chart(image_bytes, mode="General Analysis", context=None):
             "Stop Loss": "N/A",
             "Risk Level": "Unknown"
         }
+
+def chat_with_ai(message: str, image_bytes=None, context=None):
+    """
+    General Chat with financial context.
+    Returns a plain text response or markdown.
+    """
+    model = genai.GenerativeModel('gemini-1.5-pro')
+    
+    system_prompt = """
+    You are TradeMind, an advanced AI Trading Consultant.
+    Your goal is to provide helpful, accurate, and cautious financial insights.
+    
+    - If asked about specific stocks, analyze them using your training data.
+    - If provided with recent market data (in context), usage it to support your answer.
+    - Always warn about risks. Do not give financial advice as absolute fact.
+    - Be concise and professional.
+    """
+    
+    # Enhance prompt with market data if available
+    if context:
+        context_str = "\n\n**Current Market Data:**\n"
+        for k, v in context.items():
+            context_str += f"- {k}: {v}\n"
+        message = f"{context_str}\n\nUser Question: {message}"
+    else:
+        message = f"User Question: {message}"
+        
+    full_prompt = f"{system_prompt}\n\n{message}"
+    
+    try:
+        content = [full_prompt]
+        if image_bytes:
+            image = Image.open(io.BytesIO(image_bytes))
+            content.append(image)
+            
+        response = model.generate_content(content)
+        return response.text
+    except Exception as e:
+        print(f"Gemini Chat Error: {e}")
+        return "I'm having trouble connecting to the market neural network right now. Please try again later."

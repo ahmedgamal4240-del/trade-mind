@@ -138,3 +138,52 @@ async def analyze_endpoint(request: AnalyzeRequest):
         return analysis
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+class ChatRequest(BaseModel):
+    message: str
+    image_url: str = None
+    ticker: str = "General"
+
+@app.post("/api/chat")
+async def chat_endpoint(request: ChatRequest):
+    """
+    General Chat endpoint.
+    """
+    if not GEMINI_API_KEY:
+        raise HTTPException(status_code=500, detail="Gemini API Key not configured")
+
+    try:
+        # 1. Get Context (Market Data) if ticker is provided
+        market_context = {}
+        if request.ticker and request.ticker != "General":
+            try:
+                # Basic price data
+                price_data = get_market_data(request.ticker, return_df=False)
+                if price_data:
+                    current = price_data[0]
+                    market_context = {
+                        "Price": current.get('close'),
+                        "Volume": current.get('volume'),
+                        "Date": current.get('time')
+                    }
+            except Exception as e:
+                print(f"Context error: {e}")
+
+        # 2. Handle Image if present
+        image_bytes = None
+        if request.image_url:
+            try:
+                r = requests.get(request.image_url)
+                if r.status_code == 200:
+                    image_bytes = r.content
+            except Exception as e:
+                print(f"Image download error: {e}")
+
+        # 3. Call AI
+        from .strategy_engine import chat_with_ai
+        response_text = chat_with_ai(request.message, image_bytes, market_context)
+        
+        return {"response": response_text}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
