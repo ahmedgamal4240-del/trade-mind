@@ -6,12 +6,13 @@ import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Fingerprint, Mail, Lock, ArrowRight, UserPlus } from 'lucide-react'
+import { Fingerprint, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
     const [isLoginMode, setIsLoginMode] = useState(true) // Toggle between Login and Signup
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [showPassword, setShowPassword] = useState(false) // Toggle password visibility
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
     const router = useRouter()
@@ -20,24 +21,33 @@ export default function LoginPage() {
         e.preventDefault()
         setLoading(true)
         setMessage(null)
+        console.log("Attempting auth...", { isLoginMode, email }) // Debug log
 
         try {
             if (isLoginMode) {
-                const { error } = await supabase.auth.signInWithPassword({
+                const { data, error } = await supabase.auth.signInWithPassword({
                     email,
                     password,
                 })
                 if (error) throw error
+                console.log("Login success:", data)
                 router.push('/')
             } else {
-                const { error } = await supabase.auth.signUp({
+                const { data, error } = await supabase.auth.signUp({
                     email,
                     password,
                 })
                 if (error) throw error
-                setMessage({ type: 'success', text: 'Registration successful! Check your email to confirm.' })
+                console.log("Signup success:", data)
+                // If auto-confirm is on, we might be logged in already
+                if (data.session) {
+                    router.push('/')
+                } else {
+                    setMessage({ type: 'success', text: 'Registration successful! Please check your email.' })
+                }
             }
         } catch (error: any) {
+            console.error("Auth error:", error)
             setMessage({ type: 'error', text: error.message || 'An unexpected error occurred' })
         } finally {
             setLoading(false)
@@ -89,14 +99,21 @@ export default function LoginPage() {
                         <div className="relative group">
                             <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-500 group-focus-within:text-neon-purple transition-colors" />
                             <Input
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Password"
-                                className="pl-10 bg-white/5 border-white/10 focus:border-neon-purple transition-colors"
+                                className="pl-10 pr-10 bg-white/5 border-white/10 focus:border-neon-purple transition-colors"
                                 required
                                 minLength={6}
                             />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-3 text-gray-500 hover:text-white transition-colors"
+                            >
+                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                            </button>
                         </div>
                     </div>
 
