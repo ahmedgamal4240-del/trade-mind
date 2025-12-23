@@ -137,32 +137,42 @@ export default function ChatInterface({ ticker = "General" }: ChatProps) {
     };
 
     return (
-        <Card className="flex flex-col h-[600px] relative overflow-hidden border-neon-cyan/20">
+        <Card className="flex flex-col h-[500px] md:h-[650px] relative overflow-hidden border-white/5 bg-black/40 backdrop-blur-xl shadow-2xl">
+            {/* Glossy Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
             {/* Header */}
-            <div className="p-4 border-b border-white/10 flex items-center justify-between bg-black/20 backdrop-blur-md">
+            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/5 backdrop-blur-md relative z-10">
                 <div className="flex items-center gap-3">
-                    <div className="bg-neon-purple/20 p-2 rounded-lg">
-                        <Bot className="w-5 h-5 text-neon-purple" />
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-neon-cyan/20 to-neon-purple/20 flex items-center justify-center border border-white/10 shadow-[0_0_15px_rgba(157,0,255,0.1)]">
+                        <Bot className="w-6 h-6 text-neon-cyan" />
                     </div>
                     <div>
-                        <h3 className="font-bold text-white">AI Consultant</h3>
+                        <h3 className="font-bold text-white tracking-tight">AI Consultant</h3>
                         <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-neon-green animate-pulse" />
-                            <span className="text-xs text-gray-400">Online • Gemini 1.5 Pro</span>
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neon-green opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-neon-green"></span>
+                            </span>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400">Gemini 1.5 Pro</span>
                         </div>
                     </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => setMessages([])}>
-                    <RefreshCw className="w-4 h-4 text-gray-400 hover:text-white transition-colors" />
+                <Button variant="ghost" size="sm" onClick={() => setMessages([])} className="hover:bg-white/10 text-gray-400 hover:text-white">
+                    <RefreshCw className="w-4 h-4" />
                 </Button>
             </div>
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                 {messages.length === 0 && (
-                    <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 space-y-4 opacity-50">
-                        <Sparkles className="w-12 h-12 text-neon-cyan/50" />
-                        <p className="text-sm">Select a strategy below or ask me anything.</p>
+                    <div className="flex flex-col items-center justify-center h-full text-center space-y-6 opacity-0 animate-in fade-in duration-700">
+                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-neon-cyan/10 to-neon-purple/10 flex items-center justify-center animate-pulse-slow">
+                            <Sparkles className="w-10 h-10 text-neon-cyan" />
+                        </div>
+                        <div className="space-y-2 max-w-xs">
+                            <h3 className="text-lg font-bold text-white">How can I help you trade?</h3>
+                            <p className="text-sm text-gray-400">Select a strategy below to start your analysis or just type your question.</p>
+                        </div>
                     </div>
                 )}
 
@@ -176,20 +186,25 @@ export default function ChatInterface({ ticker = "General" }: ChatProps) {
                     >
                         <div
                             className={cn(
-                                "max-w-[85%] rounded-2xl p-4 shadow-lg backdrop-blur-sm border",
+                                "max-w-[85%] rounded-2xl p-4 shadow-lg backdrop-blur-sm border relative overflow-hidden group transition-all",
                                 msg.role === 'user'
-                                    ? "bg-neon-cyan/10 border-neon-cyan/20 text-white rounded-br-none"
-                                    : "bg-white/5 border-white/10 text-gray-200 rounded-bl-none"
+                                    ? "bg-gradient-to-br from-neon-purple/20 to-neon-cyan/10 border-neon-purple/20 text-white rounded-br-none shadow-[0_4px_20px_rgba(157,0,255,0.1)]"
+                                    : "bg-white/5 border-white/5 text-gray-200 rounded-bl-none shadow-[0_4px_20px_rgba(0,0,0,0.2)]"
                             )}
                         >
+                            {/* Shiny border effect for user messages */}
+                            {msg.role === 'user' && (
+                                <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-50" />
+                            )}
+
                             {(msg.role === 'ai' || msg.role === 'assistant') && (
-                                <div className="flex items-center gap-2 mb-2 text-xs font-bold uppercase tracking-wider text-neon-purple opacity-80">
+                                <div className="flex items-center gap-2 mb-2 text-[10px] font-bold uppercase tracking-widest text-neon-cyan opacity-80">
                                     <Bot className="w-3 h-3" /> TradeMind AI
                                 </div>
                             )}
 
                             {msg.image && (
-                                <div className="mb-3 rounded-xl overflow-hidden border border-white/20 shadow-lg">
+                                <div className="mb-3 rounded-lg overflow-hidden border border-white/10 shadow-md">
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img src={msg.image} alt="Upload" className="w-full object-cover max-h-48" />
                                 </div>
@@ -215,7 +230,7 @@ export default function ChatInterface({ ticker = "General" }: ChatProps) {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 border-t border-white/10 bg-black/40 backdrop-blur-md">
+            <div className="p-4 border-t border-white/5 bg-black/40 backdrop-blur-xl relative z-10">
                 {/* Visualizer Modes */}
                 <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-none mask-fade-right mb-2">
                     {strategies.map((s) => {
@@ -226,25 +241,25 @@ export default function ChatInterface({ ticker = "General" }: ChatProps) {
                                 key={s.name}
                                 onClick={() => setStrategyMode(s.name)}
                                 className={cn(
-                                    "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-all whitespace-nowrap",
+                                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide border transition-all whitespace-nowrap",
                                     isActive
-                                        ? `bg-white/10 border-${s.color.split('-')[1] || 'white'} text-white shadow-[0_0_10px_rgba(255,255,255,0.1)]`
-                                        : "bg-transparent border-white/10 text-gray-400 hover:border-white/30 hover:text-white"
+                                        ? `bg-white/10 border-${s.color.split('-')[1] === 'neon' ? s.color.split('-')[2] : s.color.split('-')[1] || 'white'}/50 text-white shadow-[0_0_15px_rgba(255,255,255,0.05)]`
+                                        : "bg-transparent border-white/5 text-gray-500 hover:border-white/20 hover:text-gray-300"
                                 )}
                             >
-                                <Icon className={cn("w-3 h-3", isActive ? s.color : "text-gray-500")} />
+                                <Icon className={cn("w-3 h-3", isActive ? s.color : "grayscale opacity-50")} />
                                 {s.name}
                             </button>
                         );
                     })}
                 </div>
 
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-3 items-center bg-white/5 p-2 rounded-2xl border border-white/5 focus-within:border-neon-cyan/30 focus-within:bg-white/10 transition-all shadow-inner">
                     {mode === 'Vision Mode' && (
                         <>
                             <button
                                 onClick={() => fileInputRef.current?.click()}
-                                className="p-3 text-gray-400 hover:text-neon-cyan hover:bg-white/5 rounded-xl transition-colors"
+                                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors shrink-0"
                             >
                                 <ImageIcon size={20} />
                             </button>
@@ -265,17 +280,17 @@ export default function ChatInterface({ ticker = "General" }: ChatProps) {
                             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                             placeholder={isListening ? "Listening..." : `Ask about ${strategyMode}...`}
                             className={cn(
-                                "pr-10",
-                                isListening && "border-neon-red shadow-[0_0_10px_rgba(255,0,0,0.5)] placeholder:text-neon-red"
+                                "pr-10 bg-transparent border-none focus:ring-0 focus:shadow-none px-0 text-sm placeholder:text-gray-600 h-auto py-2",
+                                isListening && "placeholder:text-neon-red animate-pulse"
                             )}
                         />
                         <button
                             onClick={startListening}
                             className={cn(
-                                "absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all",
+                                "absolute right-0 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all",
                                 isListening
-                                    ? "text-neon-red bg-neon-red/10 animate-pulse"
-                                    : "text-gray-400 hover:text-white hover:bg-white/10"
+                                    ? "text-neon-red"
+                                    : "text-gray-600 hover:text-white"
                             )}
                         >
                             <Mic className="w-4 h-4" />
@@ -285,7 +300,7 @@ export default function ChatInterface({ ticker = "General" }: ChatProps) {
                         onClick={handleSend}
                         disabled={(!input && !selectedImage) || loading}
                         variant="primary"
-                        className="px-4"
+                        className="w-10 h-10 rounded-xl p-0 shrink-0 shadow-lg shadow-neon-cyan/20"
                         glow
                     >
                         <Send className="w-4 h-4" />

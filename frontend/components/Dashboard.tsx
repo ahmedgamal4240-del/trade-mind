@@ -13,12 +13,16 @@ import { Input } from './ui/Input';
 
 import { useMarketData } from '@/hooks/useMarketData';
 import { useSidebar } from '@/lib/SidebarContext';
+import { useAuth } from '@/lib/AuthProvider';
+import { LogOut, User, ChevronDown } from 'lucide-react';
 
 export default function Dashboard() {
     const [ticker, setTicker] = useState("TSLA");
     const [searchInput, setSearchInput] = useState("");
     const { marketData, news, newsSentiment, indicators, forecast, sentiment, loading } = useMarketData(ticker);
     const { toggle } = useSidebar();
+    const { session, signOut } = useAuth();
+    const [showUserMenu, setShowUserMenu] = useState(false);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -38,18 +42,31 @@ export default function Dashboard() {
     return (
         <div className="flex flex-col min-h-screen">
             {/* Mobile/Desktop Header with Search */}
-            <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-black/20 backdrop-blur-sm sticky top-0 z-40">
-                <div className="flex items-center gap-4">
-                    {/* Mobile Menu Icon would be handled by sidebar logic or layout, hidden here on desktop */}
-                    <button onClick={toggle} className="md:hidden p-2 -ml-2 text-gray-400 hover:text-white">
+            <header className="h-16 flex items-center justify-between px-4 md:px-6 border-b border-white/5 bg-black/40 backdrop-blur-xl sticky top-0 z-40 lg:hidden">
+                <div className="flex items-center gap-3">
+                    <button onClick={toggle} className="p-2 -ml-2 text-gray-400 hover:text-white active:scale-95 transition-transform">
                         <Menu size={24} />
                     </button>
-                    <h1 className="text-xl font-bold text-white hidden md:block">Market Engine Dashboard</h1>
+                    <span className="font-bold text-lg text-white tracking-tight">TradeMind</span>
                 </div>
 
-                <div className="flex items-center gap-4 flex-1 max-w-md mx-4">
+                <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="icon" className="relative">
+                        <Bell className="w-5 h-5 text-gray-400" />
+                        <span className="absolute top-2 right-2 w-2 h-2 bg-neon-red rounded-full shadow-[0_0_5px_red]" />
+                    </Button>
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-neon-cyan to-neon-purple flex items-center justify-center font-bold text-xs text-black shadow-[0_0_10px_rgba(0,243,255,0.3)]">
+                        {session?.user?.email ? session.user.email[0].toUpperCase() : 'TM'}
+                    </div>
+                </div>
+            </header>
+
+            {/* Desktop Header (Hidden on Mobile) */}
+            <header className="hidden lg:flex h-16 items-center justify-between px-6 border-b border-white/5 bg-black/20 backdrop-blur-sm sticky top-0 z-40">
+                <h1 className="text-xl font-bold text-white">Market Engine Dashboard</h1>
+
+                <div className="flex items-center gap-4 flex-1 max-w-xl mx-8">
                     <div className="flex gap-2">
-                        {/* Quick Market Selectors (Visual helpers that could pre-fill or filter) */}
                         {['US', 'Crypto', 'Forex', 'Global'].map(m => (
                             <button
                                 key={m}
@@ -80,15 +97,60 @@ export default function Dashboard() {
                         <Bell className="w-5 h-5 text-gray-400" />
                         <span className="absolute top-2 right-2 w-2 h-2 bg-neon-red rounded-full" />
                     </Button>
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-neon-cyan to-neon-purple flex items-center justify-center font-bold text-xs text-black">
-                        TM
+
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowUserMenu(!showUserMenu)}
+                            className="flex items-center gap-2 hover:bg-white/5 p-1.5 rounded-lg transition-colors"
+                        >
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-neon-cyan to-neon-purple flex items-center justify-center font-bold text-xs text-black shadow-[0_0_10px_rgba(0,243,255,0.3)]">
+                                {session?.user?.email ? session.user.email[0].toUpperCase() : 'TM'}
+                            </div>
+                            <div className="hidden md:flex flex-col items-start">
+                                <span className="text-xs font-medium text-white max-w-[100px] truncate">
+                                    {session?.user?.email?.split('@')[0] || 'Trader'}
+                                </span>
+                                <span className="text-[10px] text-neon-green">Pro Account</span>
+                            </div>
+                            <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform hidden md:block ${showUserMenu ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {showUserMenu && (
+                            <div className="absolute right-0 top-full mt-2 w-48 bg-black/90 border border-white/10 rounded-xl shadow-[0_0_30px_rgba(0,0,0,0.5)] backdrop-blur-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
+                                <div className="px-4 py-3 border-b border-white/5 md:hidden">
+                                    <p className="text-sm font-medium text-white truncate">{session?.user?.email}</p>
+                                </div>
+                                <button className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2">
+                                    <User className="w-4 h-4" /> Profile
+                                </button>
+                                <button
+                                    onClick={() => signOut()}
+                                    className="w-full text-left px-4 py-2.5 text-sm text-neon-red hover:bg-neon-red/10 transition-colors flex items-center gap-2"
+                                >
+                                    <LogOut className="w-4 h-4" /> Sign Out
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </header>
 
-            <div className="p-4 md:p-8 grid grid-cols-1 xl:grid-cols-12 gap-6 pb-24 md:pb-8">
+            <div className="p-3 md:p-8 grid grid-cols-1 xl:grid-cols-12 gap-4 md:gap-6 pb-32 md:pb-8">
                 {/* Main Content Area */}
-                <div className="col-span-1 xl:col-span-8 space-y-6">
+                <div className="col-span-1 xl:col-span-8 space-y-4 md:space-y-6">
+                    {/* Search Bar for Mobile (Visible below header) */}
+                    <div className="lg:hidden">
+                        <form onSubmit={handleSearch} className="relative w-full">
+                            <Input
+                                placeholder="Search ticker..."
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
+                                className="w-full bg-black/40 border-white/10 rounded-xl pl-10 h-11"
+                            />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
+                        </form>
+                    </div>
+
                     {/* Top Row: Stock Card (Wide) */}
                     <StockCard
                         symbol={ticker}

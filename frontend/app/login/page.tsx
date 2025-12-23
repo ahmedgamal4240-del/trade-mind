@@ -36,6 +36,9 @@ export default function LoginPage() {
                 const { data, error } = await supabase.auth.signUp({
                     email,
                     password,
+                    options: {
+                        emailRedirectTo: `${window.location.origin}/`,
+                    },
                 })
                 if (error) throw error
                 console.log("Signup success:", data)
@@ -48,7 +51,10 @@ export default function LoginPage() {
             }
         } catch (error: any) {
             console.error("Auth error:", error)
-            setMessage({ type: 'error', text: error.message || 'An unexpected error occurred' })
+            setMessage({
+                type: 'error',
+                text: error.message || 'An unexpected error occurred. Check console for details.'
+            })
         } finally {
             setLoading(false)
         }
@@ -144,6 +150,16 @@ export default function LoginPage() {
                     >
                         {isLoginMode ? 'Initialize New Identity' : 'Return to Login'}
                     </button>
+                </div>
+                <div className="mt-4 pt-4 border-t border-white/10 text-center text-xs text-gray-600">
+                    <p>Debug Config:</p>
+                    <p>Debug Config:</p>
+                    <p className="font-mono text-[10px] break-all">
+                        URL: {process.env.NEXT_PUBLIC_SUPABASE_URL ? process.env.NEXT_PUBLIC_SUPABASE_URL.slice(0, 20) + '...' : 'MISSING'}
+                    </p>
+                    <p className="font-mono text-[10px]">
+                        Key: {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Present' : 'MISSING'}
+                    </p>
                 </div>
             </Card>
         </div>
