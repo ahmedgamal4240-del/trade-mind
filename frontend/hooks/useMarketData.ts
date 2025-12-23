@@ -53,9 +53,10 @@ export const useMarketData = (ticker: string) => {
 
     useEffect(() => {
         let intervalId: NodeJS.Timeout;
+        let mount = true;
 
         const fetchData = async () => {
-            setLoading(prev => prev === false); // Don't trigger full loading spinner on background refresh
+            if (mount) setLoading(prev => prev === false); // Don't trigger full loading spinner on background refresh
             try {
                 // Fetch from FastAPI
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -85,8 +86,35 @@ export const useMarketData = (ticker: string) => {
 
             } catch (error) {
                 console.error("Error fetching market data:", error);
+
+                // FRONTEND FALLBACK: If API fails (e.g. wrong URL), generate local mock data
+                if (mount) {
+                    console.warn("Generating LOCAL mock data due to API error");
+                    const mock = [];
+                    let price = ticker === 'BTC-USD' ? 60000 : 150;
+                    const now = new Date();
+                    for (let i = 30; i >= 0; i--) {
+                        const date = new Date(now);
+                        date.setDate(date.getDate() - i);
+                        const timeStr = date.toISOString().split('T')[0];
+
+                        const change = (Math.random() - 0.5) * 5;
+                        const open = price;
+                        const close = price + change;
+                        const high = Math.max(open, close) + Math.random() * 2;
+                        const low = Math.min(open, close) - Math.random() * 2;
+
+                        mock.push({
+                            time: timeStr,
+                            open, high, low, close
+                        });
+                        price = close;
+                    }
+                    setMarketData(mock);
+                    setNews([{ source: 'SYSTEM', text: 'Displaying demo data (API unreachable)', url: '#', publishedAt: new Date().toISOString() }]);
+                }
             } finally {
-                setLoading(false);
+                if (mount) setLoading(false);
             }
         };
 
@@ -96,7 +124,10 @@ export const useMarketData = (ticker: string) => {
         // Poll every 10 seconds for "Live" feel
         intervalId = setInterval(fetchData, 10000);
 
-        return () => clearInterval(intervalId);
+        return () => {
+            mount = false;
+            clearInterval(intervalId);
+        };
     }, [ticker]);
 
     return { marketData, news, newsSentiment, indicators, forecast, sentiment, loading };
