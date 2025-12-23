@@ -64,11 +64,13 @@ export const useMarketData = (ticker: string) => {
                 const data = await res.json();
 
                 // Only update if we have valid data
-                if (data.market_data) {
+                // Only update if we have valid data
+                if (data.market_data && data.market_data.length > 0) {
                     console.log(`useMarketData: Fetched ${data.market_data.length} candles for ${ticker}`);
                     setMarketData(data.market_data);
                 } else {
                     console.warn(`useMarketData: No market_data in response for ${ticker}`, data);
+                    throw new Error("Empty market data received");
                 }
                 if (data.news) setNews(data.news);
                 if (data.news_sentiment) setNewsSentiment(data.news_sentiment);

@@ -1,107 +1,38 @@
-"use client";
+'use client';
 
-import React, { useEffect, useRef } from 'react';
-import { createChart, ColorType, IChartApi, AreaSeries } from 'lightweight-charts';
+import React from 'react';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Card } from './ui/Card';
 
-export function LiveChart({ data, ticker }: { data: any[], ticker: string }) {
-    const chartContainerRef = useRef<HTMLDivElement>(null);
-    const chartRef = useRef<IChartApi | null>(null);
-    const seriesRef = useRef<any>(null);
+interface LiveChartProps {
+    data: any[];
+    ticker: string;
+}
 
-    useEffect(() => {
-        if (!chartContainerRef.current) return;
-
-        const chart = createChart(chartContainerRef.current, {
-            layout: {
-                background: { type: ColorType.Solid, color: 'transparent' },
-                textColor: '#d1d5db',
-            },
-            grid: {
-                vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
-                horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
-            },
-            width: chartContainerRef.current.clientWidth,
-            height: 300,
-            timeScale: {
-                timeVisible: true,
-                secondsVisible: false,
-            },
-        });
-
-        // Using Candlestick or Area? Backend returns OHLC.
-        // Let's use Candlestick for better trading feel, or Area for "simple" look. 
-        // User asked for "sync live with market chart". Candlestick is more "trader".
-        // But let's stick to Area for now as it looks "cleaner" for the dashboard unless requested otherwise, 
-        // OR switch to Candlestick if data supports it. 
-        // The previous code was Area. Let's keep Area for simple "Movement" visualization, 
-        // but map OHLC to Line/Area (using Close).
-
-        const areaSeries = chart.addSeries(AreaSeries, {
-            lineColor: '#00f3ff',
-            topColor: 'rgba(0, 243, 255, 0.2)',
-            bottomColor: 'rgba(0, 243, 255, 0.0)',
-            lineWidth: 2,
-        });
-
-        seriesRef.current = areaSeries;
-        chartRef.current = chart;
-
-        const handleResize = () => {
-            if (chartContainerRef.current && chartRef.current) {
-                chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth });
-            }
-        };
-
-        window.addEventListener('resize', handleResize);
-
-        return () => {
-            window.removeEventListener('resize', handleResize);
-            chart.remove();
-        };
-    }, []);
-
-    // Update data when it changes
-    useEffect(() => {
-        if (seriesRef.current && data) {
-            console.log("LiveChart render attempt:", data);
-            if (data.length > 0) {
-                // Map API data to Chart data
-                const chartData = data.map(d => ({
-                    time: d.time,
-                    value: d.close,
-                    // Add Candlestick fields just in case we switch
-                    open: d.open,
-                    high: d.high,
-                    low: d.low,
-                    close: d.close
-                }));
-
-                // Ensure data is sorted by time (Lightweight charts requirement)
-                // API usually returns sorted, but mock data generation must also be sorted.
-                chartData.sort((a, b) => (new Date(a.time).getTime() - new Date(b.time).getTime()));
-
-                try {
-                    seriesRef.current.setData(chartData);
-                } catch (err) {
-                    console.error("Chart Data Error:", err);
-                }
-
-                // Fit content if it's the first load or significantly different?
-                // chartRef.current?.timeScale().fitContent(); 
-            }
-        }
-    }, [data]);
-
+export function LiveChart({ data, ticker }: LiveChartProps) {
     const [timeframe, setTimeframe] = React.useState('1D');
 
-    // ... (rest of the component)
+    // Format data for Recharts if needed, but it accepts array of objects naturally
+    // We just need to ensure 'time' and 'close' (or 'value') exist.
+    // API data: { time: '2023-01-01', close: 150.00, ... }
+
+    const CustomTooltip = ({ active, payload, label }: any) => {
+        if (active && payload && payload.length) {
+            return (
+                <div className="bg-black/90 border border-white/10 p-3 rounded-lg shadow-xl backdrop-blur-md">
+                    <p className="text-gray-400 text-xs mb-1">{label}</p>
+                    <p className="text-neon-cyan font-bold font-mono">
+                        ${payload[0].value.toFixed(2)}
+                    </p>
+                </div>
+            );
+        }
+        return null;
+    };
 
     return (
-        <Card className="p-6 h-[400px] flex flex-col relative overflow-hidden group">
-            {/* Glossy background effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-neon-cyan/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-
+        <Card className="p-6 h-[400px] flex flex-col relative overflow-hidden group border-white/5 bg-black/40">
+            {/* Header */}
             <div className="flex items-center justify-between mb-6 relative z-10">
                 <div className="flex items-center gap-4">
                     <div>
@@ -116,6 +47,8 @@ export function LiveChart({ data, ticker }: { data: any[], ticker: string }) {
                         <span className="text-[10px] font-bold text-neon-green uppercase tracking-wider">Live</span>
                     </div>
                 </div>
+
+                {/* Timeframe Toggles */}
                 <div className="flex bg-white/5 rounded-lg p-1 border border-white/5">
                     {['1D', '1W', '1M', '3M', '1Y', 'ALL'].map((tf) => (
                         <button
@@ -131,15 +64,54 @@ export function LiveChart({ data, ticker }: { data: any[], ticker: string }) {
                     ))}
                 </div>
             </div>
-            {(!data || data.length === 0) && (
-                <div className="absolute inset-0 flex items-center justify-center z-20 bg-black/50 backdrop-blur-sm">
-                    <div className="flex flex-col items-center">
-                        <div className="w-8 h-8 border-2 border-neon-cyan border-t-transparent rounded-full animate-spin mb-2" />
-                        <span className="text-xs text-neon-cyan font-mono animate-pulse">Waiting for market data...</span>
+
+            {/* Chart Area */}
+            <div className="flex-1 w-full min-h-0 relative z-10">
+                {(!data || data.length === 0) ? (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="flex flex-col items-center">
+                            <div className="w-8 h-8 border-2 border-neon-cyan border-t-transparent rounded-full animate-spin mb-2" />
+                            <span className="text-xs text-neon-cyan font-mono animate-pulse">Waiting for market data...</span>
+                        </div>
                     </div>
-                </div>
-            )}
-            <div ref={chartContainerRef} className="w-full flex-1 min-h-0" />
+                ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={data}>
+                            <defs>
+                                <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#00f3ff" stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor="#00f3ff" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                            <XAxis
+                                dataKey="time"
+                                hide
+                                axisLine={false}
+                                tickLine={false}
+                            />
+                            <YAxis
+                                domain={['auto', 'auto']}
+                                orientation="right"
+                                tick={{ fill: '#6b7280', fontSize: 10 }}
+                                axisLine={false}
+                                tickLine={false}
+                                tickFormatter={(val) => `$${val.toFixed(0)}`}
+                            />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Area
+                                type="monotone"
+                                dataKey="close"
+                                stroke="#00f3ff"
+                                strokeWidth={2}
+                                fillOpacity={1}
+                                fill="url(#colorPrice)"
+                                isAnimationActive={false}
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                )}
+            </div>
         </Card>
     );
 }
