@@ -64,19 +64,28 @@ export function LiveChart({ data, ticker }: { data: any[], ticker: string }) {
     // Update data when it changes
     useEffect(() => {
         if (seriesRef.current && data) {
-            console.log("LiveChart received data:", data.length, "items", data[0]);
+            console.log("LiveChart render attempt:", data);
             if (data.length > 0) {
                 // Map API data to Chart data
-                // API: { time, open, high, low, close }
-                // Area Series expects: { time, value }
                 const chartData = data.map(d => ({
                     time: d.time,
-                    value: d.close
+                    value: d.close,
+                    // Add Candlestick fields just in case we switch
+                    open: d.open,
+                    high: d.high,
+                    low: d.low,
+                    close: d.close
                 }));
 
-                // Lightweight charts needs sorted unique data. 
-                // Assuming API returns sorted.
-                seriesRef.current.setData(chartData);
+                // Ensure data is sorted by time (Lightweight charts requirement)
+                // API usually returns sorted, but mock data generation must also be sorted.
+                chartData.sort((a, b) => (new Date(a.time).getTime() - new Date(b.time).getTime()));
+
+                try {
+                    seriesRef.current.setData(chartData);
+                } catch (err) {
+                    console.error("Chart Data Error:", err);
+                }
 
                 // Fit content if it's the first load or significantly different?
                 // chartRef.current?.timeScale().fitContent(); 
